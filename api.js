@@ -178,8 +178,20 @@
   }
 
   var self = document.currentScript;
+
+  /* Carry this file's own ?v= onto the scripts we inject. GitHub Pages caches
+     site.js and friends hard, so without it a returning visitor can run last
+     week's JavaScript against this week's HTML. Bump the number in the pages and
+     every file moves together. */
+  var ver = "";
+  try {
+    var q = (self && self.src || "").split("?")[1];
+    if (q) { var m = /(?:^|&)v=([^&]+)/.exec(q); if (m) ver = "?v=" + m[1]; }
+  } catch (e) {}
+
   var after = (self && self.dataset.after ? self.dataset.after : "site.js")
-    .split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    .split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+    .map(function (s) { return s.indexOf("?") === -1 ? s + ver : s; });
 
   var booted = false;
   function boot() {

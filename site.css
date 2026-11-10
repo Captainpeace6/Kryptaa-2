@@ -1,5 +1,12 @@
-/* KRYPTAA preview — shared styles for every page.
+/* KRYPTAA — shared styles for every page.
    One black-and-gold world. Tokens first, then header, bag, drawer, cards, pages, footer. */
+
+/* The `hidden` attribute only sets display:none at user-agent level, so any later
+   display rule silently beats it. That made the checkout page show "Your bag is
+   empty" directly above a real order, and printed a discount row with no discount.
+   Every panel the scripts toggle uses `hidden`, so this has to win. */
+[hidden]{display:none!important}
+
 :root{
   --void:#0b0907;--coal:#16120e;--coal-2:#1d1712;--wall:#2e2419;
   --bone:#ece3d0;--ash:#8d8375;--rule:#2a231b;
