@@ -87,6 +87,17 @@
     })
     .catch(function () { /* snapshot stands */ });
 
+  /* A review photo is customer-supplied and ends up in an <img src>. Escaping the
+     HTML is not enough on its own: only let through a plain http(s) URL or a
+     base64 image, so nothing can smuggle in a javascript:, data:text/html or
+     other scheme. Anything else becomes empty and the card renders without a photo. */
+  function safePhoto(u) {
+    var s = String(u == null ? '' : u).trim();
+    if (/^https?:\/\//i.test(s)) return s;
+    if (/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/i.test(s)) return s;
+    return '';
+  }
+
   /* ── reviews ──────────────────────────────────────────────────────────────
      reviews-public returns { reviews: { "<productId>": [ {author,date,rating,size,body,photos,verified} ] } }.
      catalog.js carries a flat array where each entry has a pid. Flatten the live ones
@@ -105,7 +116,12 @@
           var r = arr[i] || {};
           live.push({
             pid: Number(pid), author: r.author, date: r.date, rating: r.rating,
-            size: r.size, body: r.body, photos: r.photos || [], verified: !!r.verified
+            size: r.size, body: r.body,
+            /* site.js renders `img` and `tag`, not `photos`/`verified`. Mapping to the
+               wrong names silently dropped every live review photo and every
+               Verified-buyer badge. */
+            img: safePhoto(r.photos && r.photos[0]),
+            tag: r.verified ? 'ver' : undefined
           });
         }
       }
