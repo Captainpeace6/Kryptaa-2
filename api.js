@@ -205,9 +205,16 @@
     if (q) { var m = /(?:^|&)v=([^&]+)/.exec(q); if (m) ver = "?v=" + m[1]; }
   } catch (e) {}
 
+  /* Resolve the chain against THIS script's own URL, not the page's. A page in
+     /products/ or /journal/ would otherwise ask for /products/site.js and 404,
+     leaving the page blank. */
+  var base = "";
+  try { base = (self && self.src || "").replace(/[^/]*$/, ""); } catch (e) {}
+
   var after = (self && self.dataset.after ? self.dataset.after : "site.js")
     .split(",").map(function (s) { return s.trim(); }).filter(Boolean)
-    .map(function (s) { return s.indexOf("?") === -1 ? s + ver : s; });
+    .map(function (s) { return (s.indexOf("?") === -1 ? s + ver : s); })
+    .map(function (s) { return /^(https?:)?\/\//.test(s) ? s : base + s; });
 
   var booted = false;
   function boot() {

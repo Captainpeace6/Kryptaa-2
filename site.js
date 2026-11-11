@@ -9,7 +9,18 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const money=v=>"$"+Number(v).toFixed(2);
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const byId=id=>K.products.find(p=>p.id===Number(id));
-const purl=id=>"product.html#p"+id;
+/* Google has had /products/<slug>.html indexed since launch, so those stay the real
+   URLs and every internal link points at them. The depth prefix keeps it working both
+   at the domain root and under a GitHub Pages project path, where a leading / would
+   escape the project folder. product.html#p<id> still works as a fallback. */
+const DEPTH=/\/(products|journal)\//.test(location.pathname)?"../":"";
+/* Image paths in the data are root-relative ("imgs/..."). A page served from
+   /products/ or /journal/ must reach up a level, or every photo 404s. */
+const asset=u=>{const v=String(u==null?"":u);
+  return /^(https?:|data:|\/\/|\/)/.test(v)?v:DEPTH+v};
+const purl=id=>{const s=(window.K_SLUGS||{})[id];
+  return s?DEPTH+"products/"+s+".html":DEPTH+"product.html#p"+id};
+const jurl=slug=>DEPTH+"journal/"+slug+".html";
 
 /* ── storage (per browser; falls back to memory) ── */
 const mem={};
@@ -60,7 +71,7 @@ function renderBag(){
   const rem=Math.max(0,FREE-tot),pct=Math.min(100,tot/FREE*100);
   bar.innerHTML=rem>0?`<div class="t">Add <strong>${money(rem)}</strong> more for free shipping</div><div class="track"><i style="--p:${pct}%"></i></div>`
     :`<div class="t ok">✓ Free shipping unlocked</div><div class="track"><i style="--p:100%;background:var(--ok)"></i></div>`;
-  body.innerHTML=bag.map(l=>{const p=byId(l.id);return `<div class="line"><a href="${purl(p.id)}"><img src="${esc(p.img)}" alt="${esc(p.name)}"></a><div>
+  body.innerHTML=bag.map(l=>{const p=byId(l.id);return `<div class="line"><a href="${purl(p.id)}"><img src="${esc(asset(p.img))}" alt="${esc(p.name)}"></a><div>
     <a class="nm" href="${purl(p.id)}">${esc(p.name)}</a><div class="meta">Size ${esc(l.size)} · ${money(p.price)}${isPre(p)?" · Pre-order":""}</div>
     <div class="row"><span class="qty"><button type="button" data-q="${esc(l.key)}" data-d="-1" aria-label="One less">−</button><span>${l.qty}</span><button type="button" data-q="${esc(l.key)}" data-d="1" aria-label="One more">+</button></span>
     <span class="pr">${money(p.price*l.qty)}</span></div><button class="rm" type="button" data-rm="${esc(l.key)}">Remove</button></div></div>`}).join("");
@@ -101,7 +112,7 @@ function openSizeGuide(cat){openDrawer("sgModal");const m=$("#sgModal");m.classL
 
 /* ── CARDS ── */
 function card(p){const alt=(p.gallery||[]).map(g=>g.src||g).find(s=>s&&s!==p.img);
-  return `<article class="card">${badge(p)}${heartBtn(p.id)}<a class="ph" href="${purl(p.id)}" aria-label="${esc(p.name)}"><img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">${alt?`<img class="alt" src="${esc(alt)}" alt="" loading="lazy">`:""}</a>
+  return `<article class="card">${badge(p)}${heartBtn(p.id)}<a class="ph" href="${purl(p.id)}" aria-label="${esc(p.name)}"><img src="${esc(asset(p.img))}" alt="${esc(p.name)}" loading="lazy">${alt?`<img class="alt" src="${esc(asset(alt))}" alt="" loading="lazy">`:""}</a>
   <div class="row"><a class="nm" href="${purl(p.id)}">${esc(p.name)}</a><span class="pr">${money(p.price)}</span></div><div class="sub">${esc(p.collection||"")}</div></article>`}
 
 /* ── RECENTLY VIEWED ── */
@@ -131,9 +142,12 @@ if(page==="collection"){
 if(page==="product"){
   const root=$("#pdp");let p,size=null,gi=0;
   function render(){
-    const m=/^#p(\d+)$/.exec(location.hash);p=m&&byId(m[1]);size=null;gi=0;
+    /* On a /products/<slug>.html page the id is baked into the body, so the page has
+       real content at the indexed URL instead of depending on a hash. */
+    const m=/^#p(\d+)$/.exec(location.hash);
+    p=(m&&byId(m[1]))||(document.body.dataset.pid&&byId(document.body.dataset.pid));size=null;gi=0;
     if(!p){root.innerHTML=`<div class="doc" style="text-align:center"><h2>Piece not found</h2><p>This link doesn't point to a piece in the drop.</p><a class="btn" href="men-all.html">Shop the drop</a></div>`;return}
-    document.title=p.name+" — KRYPTAA";pushRecent(p.id);
+    if(!document.body.dataset.pid)document.title=p.name+" — KRYPTAA";pushRecent(p.id);
     if(window.KAPI)KAPI.track("view_item",{value:p.price,ids:[String(p.id)],
       items:[{item_id:String(p.id),item_name:p.name,price:p.price,item_category:p.category}]});
     const gal=(p.gallery&&p.gallery.length?p.gallery:[{src:p.img,label:"Front"}]).map(g=>typeof g==="string"?{src:g,label:""}:g);
@@ -145,8 +159,8 @@ if(page==="product"){
     const acc=[["The story",p.story||p.desc],["Fit",p.fit],["Materials",p.materials],["Construction",p.technical],["Artwork",p.artisticConcept],["Finish",p.finish],["Shipping",p.shipping],["The KRYPTAA uniform",p.brandConnection]].filter(x=>x[1]);
     root.innerHTML=`<div class="crumbs mono"><a href="index.html">Home</a>/<a href="${cc.href||"men-all.html"}">${esc(cc.title||"Shop")}</a>/<span>${esc(p.name)}</span></div>
     <div class="pdp" style="padding-top:0">
-      <div class="gal"><div class="main"><img id="gMain" src="${esc(gal[0].src)}" alt="${esc(p.name)}"><span class="lab mono" id="gLab">${esc(gal[0].label||"")}</span></div>
-        ${gal.length>1?`<div class="thumbs" role="group" aria-label="Photos">${gal.map((g,i)=>`<button type="button" data-g="${i}" aria-pressed="${i===0}" aria-label="${esc(g.label||"Photo "+(i+1))}"><img src="${esc(g.src)}" alt="" loading="lazy"></button>`).join("")}</div>`:""}</div>
+      <div class="gal"><div class="main"><img id="gMain" src="${esc(asset(gal[0].src))}" alt="${esc(p.name)}"><span class="lab mono" id="gLab">${esc(gal[0].label||"")}</span></div>
+        ${gal.length>1?`<div class="thumbs" role="group" aria-label="Photos">${gal.map((g,i)=>`<button type="button" data-g="${i}" aria-pressed="${i===0}" aria-label="${esc(g.label||"Photo "+(i+1))}"><img src="${esc(asset(g.src))}" alt="" loading="lazy"></button>`).join("")}</div>`:""}</div>
       <div class="info-col">
         <div class="eyebrow">${esc(p.collection||"")}</div>
         <h1>${esc(p.name)}</h1>
@@ -177,7 +191,7 @@ if(page==="product"){
 }
 
 /* REVIEWS */
-function rvCard(r){const p=byId(r.pid);return `<article class="rv"><div class="ph"><img src="${esc(r.img)}" alt="${esc(r.author)} wearing the ${esc(p?p.name:"")}" loading="lazy" style="object-position:${esc(r.pos||"50% 20%")}"></div><div class="bd">
+function rvCard(r){const p=byId(r.pid);return `<article class="rv"><div class="ph"><img src="${esc(asset(r.img))}" alt="${esc(r.author)} wearing the ${esc(p?p.name:"")}" loading="lazy" style="object-position:${esc(r.pos||"50% 20%")}"></div><div class="bd">
   <div class="stars" aria-label="5 out of 5 stars">★★★★★</div><blockquote>${esc(r.body)}</blockquote>
   <div class="who"><b>${esc(r.author)}</b>${r.tag==="ver"?'<span class="ver mono">✓ Verified buyer</span>':r.tag==="crew"?'<span class="crew mono">Crew fit check</span>':""}
   <span class="on mono">On <a href="${purl(r.pid)}">${esc(p?p.name:"")}</a> · Size ${esc(r.size)}</span></div></div></article>`}
@@ -195,7 +209,7 @@ if(page==="checkout"){
   let applied=null,pct=0;
   const lineItems=()=>bag.map(l=>{const p=byId(l.id);return{item_id:String(l.id),item_name:p.name,price:p.price,quantity:l.qty,item_variant:l.size}});
   const draw=()=>{const box=$("#coLines"),has=bag.length;$("#coEmpty").hidden=has;$("#coFull").hidden=!has;if(!has)return;
-    box.innerHTML=bag.map(l=>{const p=byId(l.id);return `<div class="line"><img src="${esc(p.img)}" alt=""><div><a class="nm" href="${purl(p.id)}">${esc(p.name)}</a><div class="meta">Size ${esc(l.size)} · Qty ${l.qty}</div><div class="row"><span class="pr">${money(p.price*l.qty)}</span><button class="rm" type="button" data-rm="${esc(l.key)}">Remove</button></div></div></div>`}).join("");
+    box.innerHTML=bag.map(l=>{const p=byId(l.id);return `<div class="line"><img src="${esc(asset(p.img))}" alt=""><div><a class="nm" href="${purl(p.id)}">${esc(p.name)}</a><div class="meta">Size ${esc(l.size)} · Qty ${l.qty}</div><div class="row"><span class="pr">${money(p.price*l.qty)}</span><button class="rm" type="button" data-rm="${esc(l.key)}">Remove</button></div></div></div>`}).join("");
     const sub=bagTotal(),disc=applied?Math.round(sub*pct*100)/100:0;
     $("#coSub").textContent=money(sub);$("#coDiscRow").hidden=!applied;$("#coDiscLbl").textContent=applied?`Discount (${Math.round(pct*100)}% off · ${applied})`:"";$("#coDisc").textContent="−"+money(disc);
     $("#coShip").textContent=sub-disc>=FREE?"Free":"Calculated at checkout";$("#coTotal").textContent=money(sub-disc);$("#payBtn").textContent="🔒 Pay now — "+money(sub-disc)};
@@ -235,13 +249,14 @@ if(page==="checkout"){
 }
 
 /* JOURNAL */
-if(page==="journal"){$("#posts").innerHTML=(K.journal||[]).map(j=>`<article class="card"><a class="ph" href="journal-post.html#${esc(j.slug)}" style="aspect-ratio:16/11"><img src="${esc(j.hero)}" alt="${esc(j.heroAlt||"")}" loading="lazy"></a>
-  <div class="sub">${new Date(j.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${j.readMins} min</div><a class="nm" href="journal-post.html#${esc(j.slug)}" style="font-family:var(--f-display);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1.05">${esc(j.title)}</a><p style="color:var(--ash);margin:0">${esc(j.desc)}</p></article>`).join("")}
-if(page==="post"){const show=()=>{const s=location.hash.slice(1),j=(K.journal||[]).find(x=>x.slug===s)||(K.journal||[])[0];if(!j)return;
-  document.title=j.title+" — KRYPTAA Journal";$("#postHead").innerHTML=`<div class="crumbs mono"><a href="index.html">Home</a>/<a href="journal.html">Journal</a></div><h1 style="font-size:clamp(40px,6vw,84px)">${esc(j.title)}</h1><p>${esc(j.desc)}</p><div class="mono" style="color:var(--ash);margin-top:14px">${new Date(j.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${j.readMins} min read</div>`;
-  $("#postImg").innerHTML=`<img src="${esc(j.hero)}" alt="${esc(j.heroAlt||"")}" style="width:100%;max-height:70vh;object-fit:cover">`;
+if(page==="journal"){$("#posts").innerHTML=(K.journal||[]).map(j=>`<article class="card"><a class="ph" href="${jurl(j.slug)}" style="aspect-ratio:16/11"><img src="${esc(asset(j.hero))}" alt="${esc(j.heroAlt||"")}" loading="lazy"></a>
+  <div class="sub">${new Date(j.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${j.readMins} min</div><a class="nm" href="${jurl(j.slug)}" style="font-family:var(--f-display);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1.05">${esc(j.title)}</a><p style="color:var(--ash);margin:0">${esc(j.desc)}</p></article>`).join("")}
+if(page==="post"){const show=()=>{const s=location.hash.slice(1)||document.body.dataset.slug||"",
+    j=(K.journal||[]).find(x=>x.slug===s)||(K.journal||[])[0];if(!j)return;
+  if(!document.body.dataset.slug)document.title=j.title+" — KRYPTAA Journal";$("#postHead").innerHTML=`<div class="crumbs mono"><a href="index.html">Home</a>/<a href="journal.html">Journal</a></div><h1 style="font-size:clamp(40px,6vw,84px)">${esc(j.title)}</h1><p>${esc(j.desc)}</p><div class="mono" style="color:var(--ash);margin-top:14px">${new Date(j.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${j.readMins} min read</div>`;
+  $("#postImg").innerHTML=`<img src="${esc(asset(j.hero))}" alt="${esc(j.heroAlt||"")}" style="width:100%;max-height:70vh;object-fit:cover">`;
   $("#postBody").innerHTML=j.body;const others=(K.journal||[]).filter(x=>x!==j).slice(0,3);
-  $("#more").innerHTML=others.map(o=>`<article class="card"><a class="ph" href="journal-post.html#${esc(o.slug)}" style="aspect-ratio:16/11"><img src="${esc(o.hero)}" alt="" loading="lazy"></a><a class="nm" href="journal-post.html#${esc(o.slug)}">${esc(o.title)}</a></article>`).join("");scrollTo(0,0)};
+  $("#more").innerHTML=others.map(o=>`<article class="card"><a class="ph" href="${jurl(o.slug)}" style="aspect-ratio:16/11"><img src="${esc(asset(o.hero))}" alt="" loading="lazy"></a><a class="nm" href="${jurl(o.slug)}">${esc(o.title)}</a></article>`).join("");scrollTo(0,0)};
   addEventListener("hashchange",show);show()}
 
 /* TRACK ORDER — live, email + one-time code.
