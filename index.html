@@ -238,7 +238,7 @@ h1,h2{font-family:var(--f-display);font-weight:900;text-transform:uppercase;line
 .spin-btns{display:flex;justify-content:center;gap:10px;margin-top:6px}
 .spin-btns button{background:none;border:1px solid #3a3026;color:var(--gold);padding:10px 18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .spin-btns button:hover{border-color:var(--gold)}.spin-btns button:active{background:rgba(201,162,74,.14)}
-.track{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateZ(-11deg)}
+.track{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateZ(-11deg)}@media (min-width:761px){.track{transform:rotateZ(-6deg)}.spin-sec .head{margin-bottom:0}}
 .hc{position:absolute;left:50%;top:50%;width:var(--cw);height:calc(var(--cw)*1.32);margin-left:calc(var(--cw)/-2);margin-top:calc(var(--cw)*-.66);transform-style:preserve-3d;will-change:transform;-webkit-tap-highlight-color:transparent}
 .hc img{width:100%;height:100%;object-fit:contain;background:#0f0c09;border-radius:2px;backface-visibility:visible;box-shadow:0 10px 30px rgba(0,0,0,.55);pointer-events:none;-webkit-user-drag:none;transition:outline-color .2s;outline:2px solid transparent;outline-offset:2px}
 .hc:hover img,.hc:focus-visible img{outline-color:var(--gold-hi)}
@@ -584,6 +584,19 @@ footer .note{color:var(--ash);width:100%;margin:0}
   <div class="mq"><div class="mq-row rev-dir" id="mq2"></div></div>
 </section>
 
+<!-- 4. SPINNING RIBBON -->
+<section class="sec spin-sec">
+  <div class="wrap head">
+    <div><div class="eyebrow">The whole drop</div><h2>Spin the<br>drop</h2></div>
+    <p>Grab the ribbon and spin it. It stops when you point at it, so you can tap any piece to open it in the store.</p>
+  </div>
+  <div class="helix" id="helix" aria-label="Spinning ribbon of KRYPTAA products. Drag to spin, tap a piece to open it.">
+    <div class="track" id="track"></div>
+  </div>
+  <div class="spin-cap wrap" id="spinCap" aria-live="polite"><span class="hint mono">Drag to spin · tap a piece to open it</span></div>
+  <div class="spin-btns wrap"><button type="button" class="mono" data-spin="-1" aria-label="Spin left">‹ Spin</button><button type="button" class="mono" data-spin="1" aria-label="Spin right">Spin ›</button></div>
+</section>
+
 <!-- 5. PICK YOUR WEAPON -->
 <section class="sec">
   <div class="wrap">
@@ -601,6 +614,32 @@ footer .note{color:var(--ash);width:100%;margin:0}
 <section class="bvid" aria-label="Brand video"><video id="bvid" src="imgs/brand-video.mp4" poster="imgs/brand-video-poster.webp" muted loop playsinline preload="metadata"></video>
   <div class="wrap"><div class="eyebrow">Drop 001 — SS26</div><h2>The uniform for<br>the underground</h2><p>Gothic roots. Streetwear edge. No compromises.</p><a class="btn" href="men-all.html">Shop the drop</a></div>
   <button class="play mono" type="button" id="bvBtn" aria-label="Pause video">❚❚ Pause</button><button class="play mono sound" type="button" id="bvSound" aria-label="Turn sound on" aria-pressed="false">🔇 Tap for sound</button></section>
+
+<!-- SPEC SHEET (from kryptaa.com) -->
+<section class="sec"><div class="wrap">
+  <div class="head"><div><div class="eyebrow">KRYPTAA technical spec · Drop 001 · SS26</div><h2>Garment<br>architecture</h2></div><p>Construction · Measurement · Print system. Spec sheet 001-A.</p></div>
+  <div class="spec">
+    <div class="card2"><div class="eyebrow">Tees · Wear the statement</div><h3>300GSM · DTF print · Gothic artwork</h3>
+      <div class="tbl"><table><tbody><tr><td>Style</td><td>Heavyweight Oversized</td></tr><tr><td>Fabric</td><td>100% Cotton 300GSM</td></tr><tr><td>Print</td><td>DTF / Screen Print</td></tr><tr><td>Color</td><td>Jet Black</td></tr><tr><td>Fit</td><td>Boxy / Drop Shoulder</td></tr></tbody></table></div>
+      <p style="margin-top:16px"><a class="btn ghost" href="t-shirts.html">View tees →</a></p></div>
+    <div class="card2"><div class="eyebrow">Anime denim</div><h3>Wide baggy silhouette</h3>
+      <ul><li>Screen print / sublimation on both legs</li><li>Wide baggy silhouette — stacked floor-length fit</li><li>Artwork: manga / gothic inspired</li><li>100% Cotton denim · Black · Silver hardware</li></ul>
+      <p style="margin-top:22px"><a class="btn ghost" href="anime.html">View anime denim →</a></p></div>
+  </div></div></section>
+
+
+<!-- 6. TOUCH THE AURA -->
+<section class="sec">
+  <div class="wrap aura">
+    <div class="aura-art"><canvas id="dotc" aria-label="The KRYPTAA trident made of glowing gold dots. Move your cursor over it to scatter the dots."></canvas></div>
+    <div>
+      <div class="eyebrow">Touch the aura</div>
+      <h2>Own the aura.<br><em>Leave an impression.</em></h2>
+      <p>Run your cursor or finger over the trident. The dots scatter, then pull back together. A presence you feel before you see it.</p>
+      <a class="btn" href="men-all.html">Enter the drop →</a>
+    </div>
+  </div>
+</section>
 
 <!-- 7. THE STORY -->
 <section class="sec story" id="story">
@@ -922,7 +961,7 @@ new IntersectionObserver(e=>{vis=e[0].isIntersecting},{rootMargin:"200px"}).obse
 
 /* ═══ 4. SPINNING RIBBON ═══ */
 (function(){
-const track=document.getElementById("track"),helix=document.getElementById("helix"),cap=document.getElementById("spinCap");if(!helix)return;
+const track=document.getElementById("track"),helix=document.getElementById("helix"),cap=document.getElementById("spinCap");
 const hint='<span class="hint mono">'+(matchMedia("(hover:none)").matches?"Swipe sideways to spin · tap a piece to open it":"Drag to spin · tap a piece to open it")+'</span>';cap.innerHTML=hint;
 const ring=P.concat(P.slice(0,4));
 let moved=false;
@@ -943,7 +982,7 @@ helix.addEventListener("pointerenter",e=>{if(e.pointerType==="mouse")base=0});
 helix.addEventListener("pointerleave",()=>{cap.innerHTML=hint;base=BASE});
 function layout(){
   const w=helix.clientWidth,n=cards.length;
-  const cw=cards[0].offsetWidth||66,span=w<760?n*cw*.82:Math.min(w*1.25,1500),R=Math.max(54,Math.min(w*.11,150));
+  const cw=cards[0].offsetWidth||66,span=w<760?n*cw*.82:Math.min(w*.8,1260),R=Math.max(54,Math.min(w*.11,150));
   cards.forEach((c,i)=>{
     const t=i/(n-1);const x=(t-.5)*span;const a=t*Math.PI*2.4+rot;
     const z=Math.cos(a)*R,y=Math.sin(a)*R;
@@ -1031,7 +1070,7 @@ addEventListener("scroll",()=>{if(!fOn||touchUI())return;const el=document.eleme
 
 /* ═══ 6. TOUCH THE AURA — trident in dots ═══ */
 (function(){
-const cv=document.getElementById("dotc");if(!cv)return;const cx=cv.getContext("2d");
+const cv=document.getElementById("dotc"),cx=cv.getContext("2d");
 const src=new Image();src.src="img/trident.webp";
 let dots=[],mx=-9999,my=-9999,W=0,H=0,dpr=1,t0=performance.now();
 function build(){
