@@ -53,6 +53,8 @@ rather than pushing on.
   this file is public). Worker fdbe031, version 579ad810 deployed on top of the other session's stock guard (4296465 /
   c874ae52). Tested on preview: Medusa M = $29 − $28.13 + $5 shipping = $5.87. health 200, admin 401.
 - **Remove that COUPONS line and redeploy right after his test order** (and refund the order in Stripe).
+- DONE 00:55: test order paid ($5.87, Medusa S, session cs_live_agjVo6…, webhook delivered: pending_webhooks 0). Code removed
+  (Worker 2a3689a, version 1d344fbe deployed; /validate-coupon now answers invalid; health 200, admin 401). Vish refunds in Stripe.
 
 ---
 
