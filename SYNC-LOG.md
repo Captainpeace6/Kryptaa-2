@@ -46,6 +46,16 @@ rather than pushing on.
 
 ---
 
+## 2026-11-22 00:50 ET — redesign session — TEMP owner-only test coupon on the Worker (REMOVE after Vish's test)
+
+- Vish wants to place a real ~$1 test payment. Instead of dropping Medusa to $1 for everyone, a temporary 97%-off code
+  was added to `COUPONS` in `kryptaa-worker/src/catalog.js` (private repo; the code itself is not written here because
+  this file is public). Worker fdbe031, version 579ad810 deployed on top of the other session's stock guard (4296465 /
+  c874ae52). Tested on preview: Medusa M = $29 − $28.13 + $5 shipping = $5.87. health 200, admin 401.
+- **Remove that COUPONS line and redeploy right after his test order** (and refund the order in Stripe).
+
+---
+
 ## 2026-11-22 04:45 ET — Claude Code session — checkout can no longer oversell (Worker deployed)
 
 `kryptaa-worker` `4296465`, live as version **`c874ae52`** (previous: `41dae87f` — roll back to that id if
